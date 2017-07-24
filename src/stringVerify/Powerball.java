@@ -7,7 +7,7 @@ public class Powerball {
     static List<Integer> lotteryTicket;
     static Random r = new Random();
     static int[] powsOfTwo = new int[] {1, 2, 4, 8, 16, 32};
-    static long original = 0, remaining = 0, iterations = 0;
+    static long iterations = 0, limit = (long)Math.pow(10,9);
     static Map<Integer, Long> noPBStats = new HashMap<>();
     static Map<Integer, Long> PBStats = new HashMap<>();
     static {
@@ -22,19 +22,22 @@ public class Powerball {
     public static void main(String... args){
         long start = new Date().getTime();
         lotteryTicket = pickSix();
-        original = remaining = 1000000000l;
         int match;
+        List<Integer> picks;
         do{
-            remaining -= 2; //buy a ticket
             iterations++;
-            match = assessMatches(pickSix());
-            int bc = Integer.bitCount(match);
-            remaining += (match>31)? getPBPayout(bc-1): getNoPBPayout(bc);
-            if(match<32)
-                noPBStats.put(bc, noPBStats.get(bc)+1);
-            else
-                PBStats.put(bc-1, PBStats.get(bc-1)+1);
-        }while(remaining > 2);
+            picks = pickSix();
+            match = assessMatches(picks);
+            //int bc = Integer.bitCount(match);
+            if(picks.get(5)!=lotteryTicket.get(5))
+                noPBStats.put(match, noPBStats.get(match)+1);
+            else {
+                if(match==5){
+                    System.out.println("\nWinner! Ticket : " + lotteryTicket + "  Chosen: "+picks);
+                }
+                PBStats.put(match, PBStats.get(match) + 1);
+            }
+        }while(iterations < limit);
         long end = new Date().getTime();
         showStats();
         System.out.print("Time taken: ");
@@ -56,17 +59,28 @@ public class Powerball {
     }
 
     //assumed that length of chosen and lottery ticket are exactly equal
+    //ORDER MATTERS
+//    private static int assessMatches(List<Integer> chosen){
+//        int ret = 0;
+//        for(int i=0; i< lotteryTicket.size(); i++)
+//            if(lotteryTicket.get(i)==chosen.get(i))
+//                ret+=powsOfTwo[i];
+//        return ret;
+//    }
+
+    //order doesnt matter
     private static int assessMatches(List<Integer> chosen){
-        int ret = 0;
-        for(int i=0; i< lotteryTicket.size(); i++)
-            if(lotteryTicket.get(i)==chosen.get(i))
-                ret+=powsOfTwo[i];
-        return ret;
+      int ret = 0;
+      for(int x = 0; x < chosen.size()-1; x++)
+          if(lotteryTicket.subList(0,5).contains(chosen.get(x)))
+              ret++;
+      return ret;
     }
 
     private static int getPBPayout(int hits){
         //with powerball
         switch (hits) {
+            case 0:
             case 1:
                 return 4;
             case 2:
